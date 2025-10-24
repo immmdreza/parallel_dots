@@ -1,14 +1,13 @@
+use bevy_ecs::prelude::*;
+
 use std::time::{Duration, Instant};
 
 use macroquad::{
     color::*,
     input::{KeyCode, is_key_down},
-    shapes::draw_circle,
     texture::{Texture2D, draw_texture, load_image},
     window::{clear_background, next_frame, screen_height, screen_width},
 };
-
-mod world;
 
 struct Bullet {
     x: f32,
@@ -22,11 +21,17 @@ struct Enemy {
 
 #[macroquad::main("Dots")]
 async fn main() {
+    // Create a new empty World to hold our Entities and Components
+    let mut world = World::new();
+
     let spaceship_image = load_image("./spaceship.png").await.unwrap();
     let spaceship_texture = Texture2D::from_image(&spaceship_image);
 
     let bullet_image = load_image("./bullet.png").await.unwrap();
     let bullet_texture = Texture2D::from_image(&bullet_image);
+
+    let enemy_image = load_image("./enemy-2.png").await.unwrap();
+    let enemy_texture = Texture2D::from_image(&enemy_image);
 
     let mut x = (screen_width() / 2.) - 32.;
     let mut y = screen_height() - 200.;
@@ -34,6 +39,12 @@ async fn main() {
     let mut fire_delay = Instant::now();
     let mut bullets = vec![];
     let mut enemies = vec![];
+
+    // Create a new Schedule, which defines an execution strategy for Systems
+    let mut schedule = Schedule::default();
+
+    // Add our system to the schedule
+    // schedule.add_systems(movement);
 
     loop {
         clear_background(BLACK);
@@ -88,11 +99,14 @@ async fn main() {
         }
 
         for enemy in enemies.iter() {
-            draw_circle(enemy.x, enemy.y, 10., RED);
+            draw_texture(&enemy_texture, enemy.x, enemy.y, WHITE);
         }
 
         draw_texture(&spaceship_texture, x, y, WHITE);
 
-        next_frame().await
+        // Run the schedule once. If your app has a "loop", you would run this once per loop
+        schedule.run(&mut world);
+
+        next_frame().await;
     }
 }
