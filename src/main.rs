@@ -1,13 +1,26 @@
 use std::time::{Duration, Instant};
 
-use macroquad::prelude::*;
+use macroquad::{
+    color::*,
+    input::{KeyCode, is_key_down},
+    shapes::draw_circle,
+    texture::{Texture2D, draw_texture, load_image},
+    window::{clear_background, next_frame, screen_height, screen_width},
+};
+
+mod world;
 
 struct Bullet {
     x: f32,
     y: f32,
 }
 
-#[macroquad::main("BasicShapes")]
+struct Enemy {
+    x: f32,
+    y: f32,
+}
+
+#[macroquad::main("Dots")]
 async fn main() {
     let spaceship_image = load_image("./spaceship.png").await.unwrap();
     let spaceship_texture = Texture2D::from_image(&spaceship_image);
@@ -20,6 +33,7 @@ async fn main() {
 
     let mut fire_delay = Instant::now();
     let mut bullets = vec![];
+    let mut enemies = vec![];
 
     loop {
         clear_background(BLACK);
@@ -52,6 +66,18 @@ async fn main() {
             }
         }
 
+        if enemies.len() < 10 && rand::random::<f32>() > 0.8 {
+            enemies.push(Enemy {
+                y: 0.,
+                x: rand::random_range(0..screen_width() as u32) as f32,
+            });
+        }
+
+        enemies.retain_mut(|enemy| {
+            enemy.y += 5.;
+            enemy.y < screen_height() - 50.
+        });
+
         bullets.retain_mut(|bullet| {
             bullet.y -= 10.;
             bullet.y >= 0.
@@ -59,6 +85,10 @@ async fn main() {
 
         for bullet in bullets.iter() {
             draw_texture(&bullet_texture, bullet.x, bullet.y, WHITE);
+        }
+
+        for enemy in enemies.iter() {
+            draw_circle(enemy.x, enemy.y, 10., RED);
         }
 
         draw_texture(&spaceship_texture, x, y, WHITE);
